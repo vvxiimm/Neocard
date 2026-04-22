@@ -1,0 +1,470 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER & PROFILE
+// ============================================================================
+
+model User {
+  id            String   @id @default(uuid())
+  telegramId    BigInt   @unique
+  username      String?
+  firstName     String?
+  lastName      String?
+  photoUrl      String?
+  createdAt     DateTime @default(now())
+  lastLoginAt   DateTime @default(now())
+
+  profile       Profile?
+  cards         UserCard[]
+  decks         Deck[]
+  currencies    Currency[]
+  transactions  Transaction[]
+  matches       MatchPlayer[]
+  quests        UserQuest[]
+  battlePass    UserBattlePass?
+  purchases     Purchase[]
+  friendsFrom   Friend[] @relation("FriendFrom")
+  friendsTo     Friend[] @relation("FriendTo")
+  cosmetics     UserCosmetic[]
+  achievements  UserAchievement[]
+
+  @@index([telegramId])
+}
+
+model Profile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  level             Int      @default(1)
+  xp                Int      @default(0)
+  totalMatches      Int      @default(0)
+  totalWins         Int      @default(0)
+  totalLosses       Int      @default(0)
+  winStreak         Int      @default(0)
+  bestWinStreak     Int      @default(0)
+
+  rankTier          String   @default("BRONZE")
+  rankDivision      Int      @default(5)
+  rankPoints        Int      @default(0)
+  mmr               Int      @default(1000)
+
+  equippedAvatar    String?
+  equippedFrame     String?
+  equippedTitle     String?
+  equippedCardBack  String?
+  equippedEmotes    String[] @default([])
+  equippedVictory   String?
+  equippedNexus     String?
+
+  updatedAt         DateTime @updatedAt
+
+  @@index([rankTier, rankPoints])
+  @@index([mmr])
+}
+
+// ============================================================================
+// CARDS & DECKS
+// ============================================================================
+
+model CardDefinition {
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  rarity        String
+  type          String
+  faction       String
+  cost          Int
+  attack        Int?
+  defense       Int?
+  keywords      String[] @default([])
+  abilities     Json     @default("[]")
+  artUrl        String
+  animatedArtUrl String?
+  flavorText    String
+  tags          String[] @default([])
+
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  userCards     UserCard[]
+
+  @@index([rarity])
+  @@index([type])
+  @@index([faction])
+}
+
+model UserCard {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardDefinitionId  String
+  cardDefinition    CardDefinition @relation(fields: [cardDefinitionId], references: [id])
+
+  level             Int      @default(1)
+  count             Int      @default(1)
+  isGolden          Boolean  @default(false)
+  isAnimated        Boolean  @default(false)
+  acquiredAt        DateTime @default(now())
+
+  @@unique([userId, cardDefinitionId])
+  @@index([userId])
+}
+
+model Deck {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  cards       DeckCard[]
+  isActive    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  matches     MatchPlayer[]
+
+  @@index([userId])
+}
+
+model DeckCard {
+  id                String @id @default(uuid())
+  deckId            String
+  deck              Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  cardDefinitionId  String
+  count             Int    @default(1)
+
+  @@unique([deckId, cardDefinitionId])
+}
+
+// ============================================================================
+// MATCHES
+// ============================================================================
+
+model Match {
+  id          String   @id @default(uuid())
+  mode        String
+  status      String   @default("WAITING")
+
+  players     MatchPlayer[]
+  events      MatchEvent[]
+
+  winnerId    String?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MatchPlayer {
+  id          String   @id @default(uuid())
+  matchId     String
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  deckId      String
+  deck        Deck     @relation(fields: [deckId], references: [id])
+
+  result      String?
+  creditsEarned Int    @default(0)
+  xpEarned    Int      @default(0)
+  cardsEarned String[] @default([])
+  dustEarned  Int      @default(0)
+
+  @@unique([matchId, userId])
+  @@index([userId])
+}
+
+model MatchEvent {
+  id          String   @id @default(uuid())
+  matchId     String
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  type        String
+  playerId    String
+  data        Json
+  timestamp   DateTime @default(now())
+
+  @@index([matchId])
+}
+
+// ============================================================================
+// ECONOMY
+// ============================================================================
+
+model Currency {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  amount      Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type            String
+  currencyType    String
+  amount          Int
+  balanceBefore   Int
+  balanceAfter    Int
+  metadata        Json?
+
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// QUESTS & BATTLE PASS
+// ============================================================================
+
+model Quest {
+  id            String   @id @default(uuid())
+  type          String
+  name          String
+  description   String
+  requirement   Json
+  rewards       Json
+
+  isActive      Boolean  @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+
+  userQuests    UserQuest[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model UserQuest {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId       String
+  quest         Quest    @relation(fields: [questId], references: [id])
+
+  progress      Int      @default(0)
+  status        String   @default("ACTIVE")
+
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  claimedAt     DateTime?
+
+  @@unique([userId, questId])
+  @@index([userId])
+  @@index([status])
+}
+
+model BattlePass {
+  id            String   @id @default(uuid())
+  season        Int      @unique
+  name          String
+  startDate     DateTime
+  endDate       DateTime
+  tiers         Json
+
+  isActive      Boolean  @default(true)
+
+  userProgress  UserBattlePass[]
+}
+
+model UserBattlePass {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  battlePassId  String
+  battlePass    BattlePass @relation(fields: [battlePassId], references: [id])
+
+  currentTier   Int      @default(0)
+  xp            Int      @default(0)
+  isPremium     Boolean  @default(false)
+  claimedTiers  Int[]    @default([])
+
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================================================
+// SHOP
+// ============================================================================
+
+model ShopOffer {
+  id              String   @id @default(uuid())
+  name            String
+  description     String
+  type            String
+  price           Json
+  contents        Json
+
+  availableFrom   DateTime?
+  availableUntil  DateTime?
+  purchaseLimit   Int?
+  isActive        Boolean  @default(true)
+
+  createdAt       DateTime @default(now())
+
+  purchases       Purchase[]
+
+  @@index([isActive])
+  @@index([type])
+}
+
+model Purchase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offerId     String
+  offer       ShopOffer @relation(fields: [offerId], references: [id])
+
+  quantity    Int      @default(1)
+  totalPrice  Json
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// SOCIAL
+// ============================================================================
+
+model Friend {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("FriendFrom", fields: [userId], references: [id], onDelete: Cascade)
+  friendId    String
+  friend      User     @relation("FriendTo", fields: [friendId], references: [id], onDelete: Cascade)
+
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+// ============================================================================
+// COSMETICS
+// ============================================================================
+
+model Cosmetic {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  type        String
+  rarity      String
+
+  assetUrl    String
+  metadata    Json?
+
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  userCosmetics UserCosmetic[]
+
+  @@index([type])
+  @@index([rarity])
+}
+
+model UserCosmetic {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cosmeticId  String
+  cosmetic    Cosmetic @relation(fields: [cosmeticId], references: [id])
+
+  acquiredAt  DateTime @default(now())
+
+  @@unique([userId, cosmeticId])
+  @@index([userId])
+}
+
+// ============================================================================
+// ACHIEVEMENTS
+// ============================================================================
+
+model Achievement {
+  id            String   @id @default(uuid())
+  name          String
+  description   String
+  requirement   Json
+  rewards       Json
+
+  icon          String
+  isSecret      Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  progress      Int      @default(0)
+  unlockedAt    DateTime?
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+// ============================================================================
+// POKER
+// ============================================================================
+
+model PokerTable {
+  id          String   @id @default(uuid())
+  name        String
+  maxPlayers  Int
+  smallBlind  Int
+  bigBlind    Int
+  minBuyIn    Int
+  maxBuyIn    Int
+
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  sessions    PokerSession[]
+}
+
+model PokerSession {
+  id          String   @id @default(uuid())
+  tableId     String
+  table       PokerTable @relation(fields: [tableId], references: [id])
+  userId      String
+
+  buyIn       Int
+  cashOut     Int?
+  handsPlayed Int      @default(0)
+
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+
+  @@index([userId])
+  @@index([tableId])
+}

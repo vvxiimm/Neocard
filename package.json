@@ -1,0 +1,30 @@
+{
+  "name": "nexus-cards",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Premium card battler game for Telegram Mini App",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @nexus/api db:generate",
+    "db:push": "pnpm --filter @nexus/api db:push",
+    "db:migrate": "pnpm --filter @nexus/api db:migrate",
+    "db:studio": "pnpm --filter @nexus/api db:studio",
+    "db:seed": "pnpm --filter @nexus/api db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "prettier": "^3.2.5",
+    "turbo": "^1.12.4",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.15.3",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
