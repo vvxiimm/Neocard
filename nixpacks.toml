@@ -1,4 +1,14 @@
-
 [phases.setup]
+nixPkgs = ["nodejs_20", "openssl"]
 
-nixPkgs = ["nodejs_22"]
+[phases.install]
+cmds = [
+  "npm install -g pnpm@8.15.3",
+  "pnpm install"
+]
+
+[phases.build]
+cmds = ["pnpm build"]
+
+[start]
+cmd = "node apps/api/dist/main.js"
