@@ -52,3 +52,11 @@ docker-compose.override.yml
 # Misc
 *.tsbuildinfo
 .cache/
+
+# SSH Keys (NEVER commit these!)
+*.pub
+*.pem
+id_rsa
+id_ed25519
+Maxguts08
+Maxguts08.pub

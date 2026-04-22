@@ -10,8 +10,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "clean": "turbo run clean && rm -rf node_modules",
- 
-    "db:generate": "pnpm --filter @nexus/api exec prisma generate --schema=apps/api/prisma/schema.prisma"
+    "db:generate": "pnpm --filter @nexus/api exec prisma generate --schema=apps/api/prisma/schema.prisma",
     "db:push": "pnpm --filter @nexus/api db:push",
     "db:migrate": "pnpm --filter @nexus/api db:migrate",
     "db:studio": "pnpm --filter @nexus/api db:studio",

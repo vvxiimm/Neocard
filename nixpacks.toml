@@ -4,11 +4,14 @@ nixPkgs = ["nodejs_20", "openssl"]
 [phases.install]
 cmds = [
   "npm install -g pnpm@8.15.3",
-  "pnpm install"
+  "pnpm install --frozen-lockfile"
 ]
 
 [phases.build]
-cmds = ["pnpm build"]
+cmds = [
+  "pnpm db:generate",
+  "pnpm --filter @nexus/api build"
+]
 
 [start]
-cmd = "node apps/api/dist/main.js"
+cmd = "cd apps/api && pnpm db:push && node dist/main.js"

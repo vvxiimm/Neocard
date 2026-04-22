@@ -131,17 +131,17 @@ git push -u origin main
 
 ### Шаг 3.6: Настройте Backend сервис
 
+Railway автоматически обнаружит конфигурацию из файлов `railway.json` и `nixpacks.toml`.
+
+Если нужно настроить вручную:
 1. Нажмите на сервис с вашим кодом
 2. Перейдите в "Settings"
-3. В "Root Directory" укажите: `apps/api`
-4. В "Build Command" укажите:
-   ```bash
-   cd ../.. && pnpm install && pnpm db:generate && pnpm --filter @nexus/api build
-   ```
-5. В "Start Command" укажите:
-   ```bash
-   cd apps/api && pnpm db:push && node dist/main.js
-   ```
+3. Railway автоматически использует настройки из `railway.json`
+
+**Файлы конфигурации уже созданы:**
+- `railway.json` - основная конфигурация Railway
+- `nixpacks.toml` - конфигурация сборки
+- `.railwayignore` - игнорируемые файлы
 
 ### Шаг 3.7: Добавьте переменные окружения
 
