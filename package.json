@@ -5,7 +5,8 @@
   "description": "Premium card battler game for Telegram Mini App",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build",
+    "build": "cd apps/api && prisma generate && cd ../.. && pnpm --filter @nexus/api build",
+    "start": "cd apps/api && pnpm db:push && node dist/main.js",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
